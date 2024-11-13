@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/theHamdiz/gun/internal/generator"
+	"github.com/theHamdiz/it"
 )
 
 func CreateProject(name, style, moduleName string, withChannels, withSignals bool) error {
@@ -20,38 +21,45 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 
 	// Initialize go.mod
 	if err := initializeGoMod(proj.ModuleName); err != nil {
+		it.Errorf("Failed to initialize go.mod: %v", err)
 		return err
 	}
 
 	// Create directories
 	if err := createDirectories(); err != nil {
+		it.Errorf("Failed to create directories: %v", err)
 		return err
 	}
 
 	// Create main.go in cmd/http/server/
 	if err := createServerMainFile(proj); err != nil {
+		it.Errorf("Failed to create main.go: %v", err)
 		return err
 	}
 
 	// Create apiv1.go in cmd/http/api/v1/
 	if err := createAPIV1File(proj); err != nil {
+		it.Errorf("Failed to create apiv1.go: %v", err)
 		return err
 	}
 
 	// Create app wrapper
 	if err := createAppWrapper(proj); err != nil {
+		it.Errorf("Failed to create app wrapper: %v", err)
 		return err
 	}
 
 	// Include channels and signals if requested
 	if proj.WithChannels || proj.WithSignals {
 		if err := createUtils(proj.WithChannels, proj.WithSignals); err != nil {
+			it.Errorf("Failed to create utils: %v", err)
 			return err
 		}
 	}
 
 	// Setup styling
 	if err := setupStyling(proj); err != nil {
+		it.Errorf("Failed to setup styling: %v", err)
 		return err
 	}
 

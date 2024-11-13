@@ -6,6 +6,10 @@ import (
 	"github.com/theHamdiz/it"
 )
 
+func init() {
+	it.SetLogLevel(it.LevelInfo)
+}
+
 var newCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Create new entities like project",
@@ -25,10 +29,8 @@ var newProjectCmd = &cobra.Command{
 			// If the module name is not specified, use the project name
 			moduleName = projectName
 		}
-		if err := project.CreateProject(projectName, moduleName, style, withChannels, withSignals); err != nil {
-			return err
-		}
-
+		it.Ensure(project.CreateProject(projectName, moduleName, style, withChannels, withSignals))
+		
 		it.Infof("Project '%s' created successfully!\n", projectName)
 		it.Infof("Install dependencies with -> 'gun install'\n")
 		return nil
