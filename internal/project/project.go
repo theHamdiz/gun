@@ -9,37 +9,147 @@ import (
 	"github.com/theHamdiz/gun/internal/generator"
 )
 
-func CreateProject(name string, withChannels, withSignals bool) error {
+func CreateProject(name, style, moduleName string, withChannels, withSignals bool) error {
 	proj := Project{
 		Name:         name,
-		ModuleName:   name,
+		ModuleName:   moduleName,
+		Style:        style,
 		WithChannels: withChannels,
 		WithSignals:  withSignals,
 	}
 
-	// Use proj.ModuleName for go.mod initialization
+	// Initialize go.mod
 	if err := initializeGoMod(proj.ModuleName); err != nil {
 		return err
 	}
 
-	// Use proj in other functions
-	if err := createMainFile(proj); err != nil {
+	// Create directories
+	if err := createDirectories(); err != nil {
 		return err
 	}
 
-	// Install dependencies
-	if err := installDependencies(); err != nil {
+	// Create main.go in cmd/http/server/
+	if err := createServerMainFile(proj); err != nil {
+		return err
+	}
+
+	// Create apiv1.go in cmd/http/api/v1/
+	if err := createAPIV1File(proj); err != nil {
+		return err
+	}
+
+	// Create app wrapper
+	if err := createAppWrapper(proj); err != nil {
 		return err
 	}
 
 	// Include channels and signals if requested
-	if withChannels || withSignals {
-		if err := createUtils(withChannels, withSignals); err != nil {
+	if proj.WithChannels || proj.WithSignals {
+		if err := createUtils(proj.WithChannels, proj.WithSignals); err != nil {
 			return err
 		}
 	}
 
+	// Setup styling
+	if err := setupStyling(proj); err != nil {
+		return err
+	}
+
 	fmt.Println("Project scaffolding complete.")
+	return nil
+}
+
+func setupStyling(proj Project) error {
+	switch proj.Style {
+	case "tailwind":
+		return setupTailwind(proj)
+	case "shadcn":
+		return setupShadcnUI(proj)
+	case "both":
+		if err := setupTailwind(proj); err != nil {
+			return err
+		}
+		return setupShadcnUI(proj)
+	default:
+		fmt.Println("No styling framework selected.")
+		return nil
+	}
+}
+
+func setupTailwind(proj Project) error {
+	fmt.Println("Setting up Tailwind CSS...")
+
+	// Install Node.js dependencies
+	if err := exec.Command("deno", "init", "-y").Run(); err != nil {
+		return err
+	}
+	if err := exec.Command("deno", "i", "-D", "tailwindcss", "postcss", "autoprefixer").Run(); err != nil {
+		return err
+	}
+	if err := exec.Command("deno", "tailwindcss", "init", "-p").Run(); err != nil {
+		return err
+	}
+
+	// Create Tailwind CSS input file
+	err := os.MkdirAll(filepath.Join("assets", "css"), 0755)
+	if err != nil {
+		return err
+	}
+	inputCSSPath := filepath.Join("assets", "css", "input.css")
+	inputCSSContent := `@tailwind base;
+@tailwind components;
+@tailwind utilities;`
+	if err := os.WriteFile(inputCSSPath, []byte(inputCSSContent), 0644); err != nil {
+		return err
+	}
+
+	// Update tailwind.config.js content if needed
+
+	// Add build script to package.json
+	// (Additional code to modify package.json can be added here)
+
+	fmt.Println("Tailwind CSS setup complete.")
+	return nil
+}
+
+func setupShadcnUI(proj Project) error {
+	fmt.Println("Setting up shadcn/ui...")
+
+	// Ensure Tailwind CSS is set up first
+	if err := setupTailwind(proj); err != nil {
+		return err
+	}
+
+	// Install shadcn/ui components (hypothetical example)
+	if err := exec.Command("deno", "i", "@shadcn/ui").Run(); err != nil {
+		return err
+	}
+
+	// Copy shadcn/ui component files into the project
+	// (Additional code to handle shadcn/ui setup)
+
+	fmt.Println("shadcn/ui setup complete.")
+	return nil
+}
+
+func createDirectories() error {
+	dirs := []string{
+		"cmd/http/server",
+		"cmd/http/api/v1",
+		"internal/app",
+		"internal/models",
+		"internal/handlers",
+		"internal/routes",
+		"internal/middleware",
+		"internal/views",
+		"internal/utils",
+	}
+
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -48,16 +158,26 @@ func initializeGoMod(moduleName string) error {
 	return cmd.Run()
 }
 
-func createMainFile(proj Project) error {
+func createServerMainFile(proj Project) error {
 	data := struct {
-		ProjectName string
-		ModuleName  string
+		ModuleName string
 	}{
-		ProjectName: proj.Name,
-		ModuleName:  proj.ModuleName,
+		ModuleName: proj.ModuleName,
 	}
 
-	return generator.CreateFileFromTemplate("main.go", generator.MainTemplate, data)
+	mainFilePath := filepath.Join("cmd", "http", "server", "main.go")
+	return generator.CreateFileFromTemplate(mainFilePath, generator.ServerMainTemplate, data)
+}
+
+func createAPIV1File(proj Project) error {
+	data := struct {
+		ModuleName string
+	}{
+		ModuleName: proj.ModuleName,
+	}
+
+	apiFilePath := filepath.Join("cmd", "http", "api", "v1", "apiv1.go")
+	return generator.CreateFileFromTemplate(apiFilePath, generator.APIV1Template, data)
 }
 
 func installDependencies() error {
@@ -92,4 +212,15 @@ func createUtils(withChannels, withSignals bool) error {
 		}
 	}
 	return nil
+}
+
+func createAppWrapper(proj Project) error {
+	data := struct {
+		ModuleName string
+	}{
+		ModuleName: proj.ModuleName,
+	}
+
+	appFilePath := filepath.Join(proj.Name, "internal", "app", "app.go")
+	return generator.CreateFileFromTemplate(appFilePath, generator.AppTemplate, data)
 }

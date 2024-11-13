@@ -5,4 +5,5 @@ type Project struct {
 	ModuleName   string
 	WithChannels bool
 	WithSignals  bool
+	Style        string
 }

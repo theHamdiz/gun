@@ -14,7 +14,10 @@ func GenerateRoute(resourceName string) error {
 	}
 
 	routeFilePath := filepath.Join("internal", "routes", fmt.Sprintf("%s_routes.go", ToSnakeCase(resourceName)))
-	os.MkdirAll(filepath.Dir(routeFilePath), 0755)
+	err := os.MkdirAll(filepath.Dir(routeFilePath), 0755)
+	if err != nil {
+		return err
+	}
 
 	return CreateFileFromTemplate(routeFilePath, RouteTemplate, data)
 }
@@ -24,7 +27,7 @@ var RouteTemplate = `package routes
 
 import (
     "github.com/gofiber/fiber/v2"
-    "yourmodule/internal/handlers"
+    "{{ .ModuleName }}/internal/handlers"
 )
 
 func Register{{ .ResourceName }}Routes(app *fiber.App) {

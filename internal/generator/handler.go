@@ -27,7 +27,7 @@ var HandlerTemplate = `package handlers
 
 import (
     "github.com/gofiber/fiber/v2"
-    "yourmodule/internal/models"
+    "{{ .ModuleName }}/internal/models"
 )
 
 func Get{{ .ResourceName }}s(c *fiber.Ctx) error {
