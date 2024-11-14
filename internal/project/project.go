@@ -1,7 +1,6 @@
 package project
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -100,11 +99,12 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 		}
 	}
 
-	fmt.Println("Project scaffolding complete.")
+	it.Info("Project scaffolding complete.")
 	return nil
 }
 
 func createDirectories(baseDir string) error {
+	it.Infof("Creating directories in %s", baseDir)
 	dirs := []string{
 		filepath.Join(baseDir, "cmd/http/server"),
 		filepath.Join(baseDir, "cmd/http/api/v1"),
@@ -119,6 +119,7 @@ func createDirectories(baseDir string) error {
 
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
+			it.LogErrorWithStack(err)
 			return err
 		}
 	}
@@ -128,6 +129,7 @@ func createDirectories(baseDir string) error {
 func initializeGoMod(baseDir, moduleName string) error {
 	cmd := exec.Command("go", "mod", "init", moduleName)
 	cmd.Dir = baseDir // Set the directory for go.mod initialization
+	it.Infof("Initializing go.mod in %s", baseDir)
 	return cmd.Run()
 }
 
@@ -139,6 +141,7 @@ func createServerMainFile(baseDir string, proj Project) error {
 	}
 
 	mainFilePath := filepath.Join(baseDir, "cmd", "http", "server", "main.go")
+	it.Infof("Creating main.go in %s", mainFilePath)
 	return generator.CreateFileFromTemplate(mainFilePath, generator.ServerMainTemplate, data)
 }
 
@@ -190,30 +193,34 @@ func setupStyling(baseDir string, proj Project) error {
 		}
 		return setupShadcnUI(baseDir)
 	default:
-		fmt.Println("No styling framework selected.")
+		it.Warn("No styling framework selected.")
 		return nil
 	}
 }
 
 func setupTailwind(baseDir string) error {
-	fmt.Println("Setting up Tailwind CSS...")
+	it.Info("Setting up Tailwind CSS with deno...")
 	cmd := exec.Command("deno", "init", "-y")
 	cmd.Dir = baseDir
 
 	// Install Node.js dependencies
 	if err := cmd.Run(); err != nil {
+		it.LogErrorWithStack(err)
 		return err
 	}
 	if err := exec.Command("deno", "i", "-D", "tailwindcss", "postcss", "autoprefixer").Run(); err != nil {
+		it.LogErrorWithStack(err)
 		return err
 	}
 	if err := exec.Command("deno", "tailwindcss", "init", "-p").Run(); err != nil {
+		it.LogErrorWithStack(err)
 		return err
 	}
 
 	// Create Tailwind CSS input file
 	err := os.MkdirAll(filepath.Join("assets", "css"), 0755)
 	if err != nil {
+		it.LogErrorWithStack(err)
 		return err
 	}
 	inputCSSPath := filepath.Join("assets", "css", "input.css")
@@ -221,23 +228,25 @@ func setupTailwind(baseDir string) error {
 @tailwind components;
 @tailwind utilities;`
 	if err := os.WriteFile(inputCSSPath, []byte(inputCSSContent), 0644); err != nil {
+		it.LogErrorWithStack(err)
 		return err
 	}
 
-	// Update tailwind.config.js content if needed
+	/* Todo:
+	   Update tailwind.config.js content if needed
+	   Add build script to package.json
+	   (Additional code to modify package.json can be added here) */
 
-	// Add build script to package.json
-	// (Additional code to modify package.json can be added here)
-
-	fmt.Println("Tailwind CSS setup complete.")
+	it.Info("Tailwind CSS setup complete.")
 	return nil
 }
 
 func setupShadcnUI(baseDir string) error {
-	fmt.Println("Setting up shadcn/ui...")
+	it.Info("Setting up shadcn/ui...")
 
 	// Ensure Tailwind CSS is set up first
 	if err := setupTailwind(baseDir); err != nil {
+		it.LogErrorWithStack(err)
 		return err
 	}
 
@@ -245,11 +254,12 @@ func setupShadcnUI(baseDir string) error {
 	cmd := exec.Command("deno", "i", "@shadcn/ui")
 	cmd.Dir = baseDir
 	if err := cmd.Run(); err != nil {
+		it.LogErrorWithStack(err)
 		return err
 	}
 
 	// Copy shadcn/ui component files into the project
 	// (Additional code to handle shadcn/ui setup)
-	fmt.Println("shadcn/ui setup complete.")
+	it.Info("shadcn/ui setup complete.")
 	return nil
 }
