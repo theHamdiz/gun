@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/theHamdiz/gun/internal/generator"
+	"github.com/theHamdiz/it"
 )
 
 var modelCmd = &cobra.Command{
@@ -22,7 +22,7 @@ var modelCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("Model '%s' created successfully!\n", modelName)
+		it.Infof("Model '%s' created successfully!\n", modelName)
 		return nil
 	},
 }

@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"github.com/theHamdiz/gun/internal/generator"
+	"github.com/theHamdiz/it"
 )
 
 var viewCmd = &cobra.Command{
@@ -21,7 +20,7 @@ var viewCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("Views for '%s' created successfully!\n", resourceName)
+		it.Infof("Views for '%s' created successfully!\n", resourceName)
 		return nil
 	},
 }

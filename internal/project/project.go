@@ -22,21 +22,17 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 
 	// Use a WaitGroup to handle asynchronous tasks
 	var wg sync.WaitGroup
-	var errChan = make(chan error, 5)
+	var errChan = make(chan error, 4)
 
 	// Create the base project directory with the given project name
 	baseDir := strings.ToLower(proj.Name)
 
 	// Create directories asynchronously
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := createDirectories(baseDir); err != nil {
-			it.Errorf("Failed to create directories: %v", err)
-			errChan <- err
-		}
-	}()
-
+	if err := createDirectories(baseDir); err != nil {
+		it.Errorf("Failed to create directories: %v", err)
+		return err
+	}
+	
 	// Initialize go.mod asynchronously
 	wg.Add(1)
 	go func() {

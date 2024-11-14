@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"github.com/theHamdiz/gun/internal/generator"
+	"github.com/theHamdiz/it"
 )
 
 var middlewareCmd = &cobra.Command{
@@ -19,7 +18,7 @@ var middlewareCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("Middleware '%s' created successfully!\n", middlewareName)
+		it.Infof("Middleware '%s' created successfully!\n", middlewareName)
 		return nil
 	},
 }

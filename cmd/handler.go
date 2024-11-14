@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"github.com/theHamdiz/gun/internal/generator"
+	"github.com/theHamdiz/it"
 )
 
 var handlerCmd = &cobra.Command{
@@ -19,7 +18,7 @@ var handlerCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("Handlers for '%s' created successfully!\n", resourceName)
+		it.Infof("Handlers for '%s' created successfully!\n", resourceName)
 		return nil
 	},
 }
