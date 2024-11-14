@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/theHamdiz/gun/internal/generator"
 	"github.com/theHamdiz/it"
@@ -19,15 +20,15 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 		WithSignals:  withSignals,
 	}
 
-	// Initialize go.mod
-	if err := initializeGoMod(proj.ModuleName); err != nil {
-		it.Errorf("Failed to initialize go.mod: %v", err)
+	// Create directories
+	if err := createDirectories(proj.ModuleName); err != nil {
+		it.Errorf("Failed to create directories: %v", err)
 		return err
 	}
 
-	// Create directories
-	if err := createDirectories(); err != nil {
-		it.Errorf("Failed to create directories: %v", err)
+	// Initialize go.mod
+	if err := initializeGoMod(proj.ModuleName); err != nil {
+		it.Errorf("Failed to initialize go.mod: %v", err)
 		return err
 	}
 
@@ -140,17 +141,18 @@ func setupShadcnUI(proj Project) error {
 	return nil
 }
 
-func createDirectories() error {
+func createDirectories(appName string) error {
+	appName = strings.ToLower(appName)
 	dirs := []string{
-		"cmd/http/server",
-		"cmd/http/api/v1",
-		"internal/app",
-		"internal/models",
-		"internal/handlers",
-		"internal/routes",
-		"internal/middleware",
-		"internal/views",
-		"internal/utils",
+		fmt.Sprintf("%s/cmd/http/server", appName),
+		fmt.Sprintf("%s/cmd/http/api/v1", appName),
+		fmt.Sprintf("%s/internal/app", appName),
+		fmt.Sprintf("%s/internal/models", appName),
+		fmt.Sprintf("%s/internal/handlers", appName),
+		fmt.Sprintf("%s/internal/routes", appName),
+		fmt.Sprintf("%s/internal/middleware", appName),
+		fmt.Sprintf("%s/internal/views", appName),
+		fmt.Sprintf("%s/internal/utils", appName),
 	}
 
 	for _, dir := range dirs {
@@ -161,7 +163,16 @@ func createDirectories() error {
 	return nil
 }
 
+func changeDirectory(moduleName string) error {
+	cmd := exec.Command("cd", moduleName)
+	return cmd.Run()
+}
+
 func initializeGoMod(moduleName string) error {
+	err := changeDirectory(moduleName)
+	if err != nil {
+		it.Errorf("Failed to change directory: %v", err)
+	}
 	cmd := exec.Command("go", "mod", "init", moduleName)
 	return cmd.Run()
 }
