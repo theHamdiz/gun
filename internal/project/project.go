@@ -30,7 +30,7 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 
 	// Create directories asynchronously
 	if err := createDirectories(baseDir); err != nil {
-		it.Errorf("❌ Failed to create directories : %v", err)
+		it.Errorf("Failed to create directories : %v", err)
 		return err
 	}
 
@@ -39,7 +39,7 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 	go func() {
 		defer wg.Done()
 		if err := initializeGoMod(baseDir, proj.ModuleName); err != nil {
-			it.Errorf("❌ Failed to initialize go.mod: %v", err)
+			it.Errorf("Failed to initialize go.mod: %v", err)
 			errChan <- err
 		}
 	}()
@@ -49,7 +49,7 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 	go func() {
 		defer wg.Done()
 		if err := createServerMainFile(baseDir, proj); err != nil {
-			it.Errorf("❌ Failed to create main.go: %v", err)
+			it.Errorf("Failed to create main.go: %v", err)
 			errChan <- err
 		}
 	}()
@@ -59,7 +59,7 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 	go func() {
 		defer wg.Done()
 		if err := createAPIV1File(baseDir, proj); err != nil {
-			it.Errorf("❌ Failed to create apiv1.go: %v", err)
+			it.Errorf("Failed to create apiv1.go: %v", err)
 			errChan <- err
 		}
 	}()
@@ -70,7 +70,7 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 		go func() {
 			defer wg.Done()
 			if err := createUtils(baseDir, proj.WithChannels, proj.WithSignals); err != nil {
-				it.Errorf("❌ Failed to create utils: %v", err)
+				it.Errorf("Failed to create utils: %v", err)
 				errChan <- err
 			}
 		}()
@@ -81,7 +81,7 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 	go func() {
 		defer wg.Done()
 		if err := setupStyling(baseDir, proj); err != nil {
-			it.Errorf("❌ Failed to set up styling: %v", err)
+			it.Errorf("Failed to set up styling: %v", err)
 			errChan <- err
 		}
 	}()
@@ -96,16 +96,16 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 		}
 	}
 
-	it.Info("✅️ Project scaffolding complete.")
+	it.Info("Project scaffolding complete.")
 	return nil
 }
 
 func createDirectories(baseDir string) error {
-	it.Infof("✅️ Creating project in %s", baseDir)
+	it.Infof("Creating project in %s", baseDir)
 	// Attempt to create the base directory. If it exists, MkdirAll will not throw an error.
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
-		it.Errorf("❌ Failed to create base directory %s: %w", baseDir, err)
-		return fmt.Errorf("❌ Failed to create base directory %s: %w", baseDir, err)
+		it.Errorf("Failed to create base directory %s: %w", baseDir, err)
+		return fmt.Errorf("failed to create base directory %s: %w", baseDir, err)
 	}
 	dirs := []string{
 		filepath.Join(baseDir, "cmd/http/server"),
@@ -132,7 +132,7 @@ func createDirectories(baseDir string) error {
 func initializeGoMod(baseDir, moduleName string) error {
 	cmd := exec.Command("go", "mod", "init", moduleName)
 	cmd.Dir = baseDir // Set the directory for go.mod initialization
-	it.Infof("✅️ Initializing go.mod in %s", baseDir)
+	it.Infof("Initializing go.mod in %s", baseDir)
 	return cmd.Run()
 }
 
@@ -144,7 +144,7 @@ func createServerMainFile(baseDir string, proj Project) error {
 	}
 
 	mainFilePath := filepath.Join(baseDir, "cmd", "http", "server", "main.go")
-	it.Infof("✅️ Creating main.go in %s", mainFilePath)
+	it.Infof("Creating main.go in %s", mainFilePath)
 	return generator.CreateFileFromTemplate(mainFilePath, generator.ServerMainTemplate, data)
 }
 
@@ -196,13 +196,13 @@ func setupStyling(baseDir string, proj Project) error {
 		}
 		return setupShadcnUI(baseDir)
 	default:
-		it.Warn("🚧 No styling framework selected.")
+		it.Warn("No styling framework selected.")
 		return nil
 	}
 }
 
 func setupTailwind(baseDir string) error {
-	it.Info("✅️ Setting up Tailwind CSS with deno...")
+	it.Info("Setting up Tailwind CSS with deno...")
 	cmd := exec.Command("deno", "init", "-y")
 	cmd.Dir = baseDir
 
@@ -240,12 +240,12 @@ func setupTailwind(baseDir string) error {
 	   Add build script to package.json
 	   (Additional code to modify package.json can be added here) */
 
-	it.Info("✅️ Tailwind CSS setup complete.")
+	it.Info("Tailwind CSS setup complete.")
 	return nil
 }
 
 func setupShadcnUI(baseDir string) error {
-	it.Info("✅️ Setting up shadcn/ui...")
+	it.Info("Setting up shadcn/ui...")
 
 	// Ensure Tailwind CSS is set up first
 	if err := setupTailwind(baseDir); err != nil {
@@ -263,6 +263,6 @@ func setupShadcnUI(baseDir string) error {
 
 	// Copy shadcn/ui component files into the project
 	// (Additional code to handle shadcn/ui setup)
-	it.Info("✅️ Shadcn/ui setup complete.")
+	it.Info("Shadcn/ui setup complete.")
 	return nil
 }
