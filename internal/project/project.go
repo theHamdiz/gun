@@ -104,9 +104,8 @@ func createDirectories(baseDir string) error {
 	it.Infof("✅️ Creating project in %s", baseDir)
 	// Attempt to create the base directory. If it exists, MkdirAll will not throw an error.
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
-
-		it.Errorf("✅️ Failed to create base directory %s: %w", baseDir, err)
-		return fmt.Errorf("✅️ Failed to create base directory %s: %w", baseDir, err)
+		it.Errorf("❌ Failed to create base directory %s: %w", baseDir, err)
+		return fmt.Errorf("❌ Failed to create base directory %s: %w", baseDir, err)
 	}
 	dirs := []string{
 		filepath.Join(baseDir, "cmd/http/server"),
@@ -197,7 +196,7 @@ func setupStyling(baseDir string, proj Project) error {
 		}
 		return setupShadcnUI(baseDir)
 	default:
-		it.Warn("-> No styling framework selected.")
+		it.Warn("🚧 No styling framework selected.")
 		return nil
 	}
 }

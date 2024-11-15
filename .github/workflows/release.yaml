@@ -1,39 +1,86 @@
-name: Publish Release on Push to Main
+name: Release
 
 on:
   push:
     branches:
-      - main
+      - main  # Change if your default branch is named differently
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Check out the code
         uses: actions/checkout@v3
-
-      - name: Set up Git
-        run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
-
-      - name: Create Release Tag
-        id: create_tag
-        run: |
-          # Generate a version number based on current timestamp or commit hash
-          VERSION="v$(date +'%Y%m%d%H%M%S')"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          git tag -a $VERSION -m "Automated release for commit $GITHUB_SHA"
-          git push origin $VERSION
-
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: "Automated Release ${{ env.VERSION }}"
-          body: "Automated release for commit ${{ github.sha }}"
-          draft: false
-          prerelease: false
+          fetch-depth: 0  # Fetch all history to ensure all tags are available
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.x"
+
+      - name: Get the latest tag
+        id: get_latest_tag
+        run: |
+          # Fetch the highest version tag (sorted by SemVer)
+          latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v0.0.0"
+          fi
+          echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
+
+      - name: Determine next version
+        id: determine_version
+        run: |
+          # Load the latest tag
+          latest_version="${{ env.latest_tag }}"
+          echo "Current Version: $latest_version"
+
+          # Extract version numbers (X, Y, Z from vX.Y.Z)
+          version=$(echo "$latest_version" | sed 's/^v//')
+          major=$(echo "$version" | cut -d. -f1)
+          minor=$(echo "$version" | cut -d. -f2)
+          patch=$(echo "$version" | cut -d. -f3)
+
+          # Determine the next version based on the commit messages
+          if git log -1 --pretty=%B | grep -q 'BREAKING CHANGE'; then
+            major=$((major+1))
+            minor=0
+            patch=0
+          elif git log -1 --pretty=%B | grep -q '^feat'; then
+            minor=$((minor+1))
+            patch=0
+          else
+            patch=$((patch+1))
+          fi
+
+          # Set the new version
+          new_version="v${major}.${minor}.${patch}"
+          echo "new_version=${new_version}" >> $GITHUB_ENV
+          echo "Next Version: $new_version"
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "refs/tags/${{ env.new_version }}" >/dev/null 2>&1; then
+            echo "tag_exists=true" >> $GITHUB_ENV
+          else
+            echo "tag_exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create tag for new version
+        if: env.tag_exists == 'false'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "<>"
+          git tag -a ${{ env.new_version }} -m "Release ${{ env.new_version }}"
+          git push origin ${{ env.new_version }}
+
+      - name: Create GitHub release
+        if: env.tag_exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.new_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
