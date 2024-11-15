@@ -23,8 +23,8 @@ jobs:
       - name: Get the latest SemVer tag
         id: get_latest_tag
         run: |
-          # Fetch the highest SemVer tag (sorted by SemVer)
-          latest_tag=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
+          # Fetch the latest valid SemVer tag, ignoring non-SemVer tags
+          latest_tag=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
           if [ -z "$latest_tag" ]; then
             latest_tag="v0.0.0"
           fi
