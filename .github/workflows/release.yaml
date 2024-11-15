@@ -20,17 +20,17 @@ jobs:
         with:
           go-version: "1.x"
 
-      - name: Get the latest tag
+      - name: Get the latest SemVer tag
         id: get_latest_tag
         run: |
-          # Fetch the highest version tag (sorted by SemVer)
-          latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          # Fetch the highest SemVer tag (sorted by SemVer)
+          latest_tag=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
           if [ -z "$latest_tag" ]; then
             latest_tag="v0.0.0"
           fi
           echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
 
-      - name: Determine next version
+      - name: Determine next SemVer version
         id: determine_version
         run: |
           # Load the latest tag
@@ -60,7 +60,7 @@ jobs:
           echo "new_version=${new_version}" >> $GITHUB_ENV
           echo "Next Version: $new_version"
 
-      - name: Check if tag exists
+      - name: Check if SemVer tag exists
         id: check_tag
         run: |
           if git rev-parse "refs/tags/${{ env.new_version }}" >/dev/null 2>&1; then
@@ -69,7 +69,7 @@ jobs:
             echo "tag_exists=false" >> $GITHUB_ENV
           fi
 
-      - name: Create tag for new version
+      - name: Create SemVer tag for new version
         if: env.tag_exists == 'false'
         run: |
           git config user.name "GitHub Actions"
