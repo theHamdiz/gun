@@ -237,29 +237,33 @@ func setupStyling(baseDir string, proj Project) error {
 func setupTailwind(baseDir string) error {
 	it.Info("Setting up Tailwind CSS with npm...")
 	cmd := exec.Command("npm", "init", "-y")
+	installCmd := exec.Command("npm", "install", "-D", "tailwindcss", "postcss", "autoprefixer")
+	postInstallCmd := exec.Command("npx", "tailwindcss", "init")
 	cmd.Dir = baseDir
+	installCmd.Dir = baseDir
+	postInstallCmd.Dir = baseDir
 
 	// Install Node.js dependencies
 	if err := cmd.Run(); err != nil {
 		it.LogErrorWithStack(err)
 		return err
 	}
-	if err := exec.Command("npm", "install", "-D", "tailwindcss", "postcss", "autoprefixer").Run(); err != nil {
+	if err := installCmd.Run(); err != nil {
 		it.LogErrorWithStack(err)
 		return err
 	}
-	if err := exec.Command("npx", "tailwindcss", "init").Run(); err != nil {
+	if err := postInstallCmd.Run(); err != nil {
 		it.LogErrorWithStack(err)
 		return err
 	}
 
 	// Create Tailwind CSS input file
-	err := os.MkdirAll(filepath.Join("assets", "css"), 0755)
+	err := os.MkdirAll(filepath.Join(baseDir, "assets", "css"), 0755)
 	if err != nil {
 		it.LogErrorWithStack(err)
 		return err
 	}
-	inputCSSPath := filepath.Join("assets", "css", "input.css")
+	inputCSSPath := filepath.Join(baseDir, "assets", "css", "input.css")
 	inputCSSContent := `@tailwind base;
 @tailwind components;
 @tailwind utilities;`
