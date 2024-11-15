@@ -80,6 +80,53 @@ func (a *App) Run(address string) {
 }
 `
 
+var UserTemplate = `package models
+
+type User struct {
+	ID   string    ` + "`" + `json:"id" db:"id"` + "`" + `
+	Name string ` + "`" + `json:"name" db:"name"` + "`" + `
+	Email string ` + "`" + `json:"email" db:"email"` + "`" + `
+	Password string ` + "`" + `json:"password" db:"password"` + "`" + `
+	PasswordHash string ` + "`" + `json:"-" db:"password_hash"` + "`" + `
+	CreatedAt string ` + "`" + `json:"created_at" db:"created_at"` + "`" + `
+	UpdatedAt string ` + "`" + `json:"updated_at" db:"updated_at"` + "`" + `
+	IsActive bool ` + "`" + `json:"is_active" db:"is_active"` + "`" + `
+}
+
+func (u *User) TableName() string {
+	return "users"
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u.PasswordHash = string(hashedPassword)
+	return nil
+}
+
+func (u *User) BeforeUpdate(tx *gorm.DB) error {
+	if u.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		u.PasswordHash = string(hashedPassword)
+	}
+	return nil
+}
+
+func (u *User) BeforeDelete(tx *gorm.DB) error {
+	return nil
+}
+
+func (User) Login(username, password string) (*User, error) {
+	// TODO: Implement user login logic
+	return nil, nil
+}
+`
+
 // ModelTemplate is the template for generating models
 var ModelTemplate = `package models
 
@@ -104,7 +151,7 @@ func main() {
 `
 
 // APIV1Template is the template for apiv1.go
-var APIV1Template = `package v1
+var APIV1Template = `package apiv1
 
 import (
     "github.com/gofiber/fiber/v2"
@@ -151,7 +198,7 @@ func SetupGracefulShutdown(app *fiber.App) {
 }
 `
 
-var RoutesTemplate = `package routes
+var RouterTemplate = `package routes
 
 import (
     "github.com/gofiber/fiber/v2"

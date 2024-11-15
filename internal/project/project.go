@@ -12,7 +12,7 @@ import (
 	"github.com/theHamdiz/it"
 )
 
-func CreateProject(name, style, moduleName string, withChannels, withSignals bool) error {
+func CreateProject(name, moduleName, style string, withChannels, withSignals bool) error {
 	proj := Project{
 		Name:         name,
 		ModuleName:   moduleName,
@@ -23,7 +23,7 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 
 	// Use a WaitGroup to handle asynchronous tasks
 	var wg sync.WaitGroup
-	var errChan = make(chan error, 4)
+	var errChan = make(chan error, 7)
 
 	// Create the base project directory with the given project name
 	baseDir := strings.ToLower(proj.Name)
@@ -86,6 +86,36 @@ func CreateProject(name, style, moduleName string, withChannels, withSignals boo
 		}
 	}()
 
+	// Setup styling configuration based on user choice
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := createRouterFile(baseDir, proj); err != nil {
+			it.Errorf("Failed to create the router file: %v", err)
+			errChan <- err
+		}
+	}()
+
+	// Setup styling configuration based on user choice
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := createUserFile(baseDir, proj); err != nil {
+			it.Errorf("Failed to create the user file: %v", err)
+			errChan <- err
+		}
+	}()
+
+	// Setup styling configuration based on user choice
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := createAppFile(baseDir, proj); err != nil {
+			it.Errorf("Failed to create the app file: %v", err)
+			errChan <- err
+		}
+	}()
+
 	wg.Wait()
 	close(errChan)
 
@@ -137,26 +167,29 @@ func initializeGoMod(baseDir, moduleName string) error {
 }
 
 func createServerMainFile(baseDir string, proj Project) error {
-	data := struct {
-		ModuleName string
-	}{
-		ModuleName: proj.ModuleName,
-	}
-
 	mainFilePath := filepath.Join(baseDir, "cmd", "http", "server", "main.go")
 	it.Infof("Creating main.go in %s", mainFilePath)
-	return generator.CreateFileFromTemplate(mainFilePath, generator.ServerMainTemplate, data)
+	return generator.CreateFileFromTemplate(mainFilePath, generator.ServerMainTemplate, proj)
 }
 
 func createAPIV1File(baseDir string, proj Project) error {
-	data := struct {
-		ModuleName string
-	}{
-		ModuleName: proj.ModuleName,
-	}
-
 	apiFilePath := filepath.Join(baseDir, "cmd", "http", "api", "v1", "apiv1.go")
-	return generator.CreateFileFromTemplate(apiFilePath, generator.APIV1Template, data)
+	return generator.CreateFileFromTemplate(apiFilePath, generator.APIV1Template, proj)
+}
+
+func createRouterFile(baseDir string, proj Project) error {
+	routerFilePath := filepath.Join(baseDir, "internal", "routes", "router.go")
+	return generator.CreateFileFromTemplate(routerFilePath, generator.RouterTemplate, proj)
+}
+
+func createAppFile(baseDir string, proj Project) error {
+	appFilePath := filepath.Join(baseDir, "internal", "app", "app.go")
+	return generator.CreateFileFromTemplate(appFilePath, generator.AppTemplate, proj)
+}
+
+func createUserFile(baseDir string, proj Project) error {
+	userFilePath := filepath.Join(baseDir, "internal", "models", "user.go")
+	return generator.CreateFileFromTemplate(userFilePath, generator.UserTemplate, proj)
 }
 
 func createUtils(baseDir string, withChannels, withSignals bool) error {
@@ -185,7 +218,7 @@ func createUtils(baseDir string, withChannels, withSignals bool) error {
 }
 
 func setupStyling(baseDir string, proj Project) error {
-	switch proj.Style {
+	switch strings.ToLower(proj.Style) {
 	case "tailwind":
 		return setupTailwind(baseDir)
 	case "shadcn":
