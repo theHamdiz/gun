@@ -235,8 +235,8 @@ func setupStyling(baseDir string, proj Project) error {
 }
 
 func setupTailwind(baseDir string) error {
-	it.Info("Setting up Tailwind CSS with deno...")
-	cmd := exec.Command("deno", "init", "-y")
+	it.Info("Setting up Tailwind CSS with npm...")
+	cmd := exec.Command("npm", "init", "-y")
 	cmd.Dir = baseDir
 
 	// Install Node.js dependencies
@@ -244,11 +244,11 @@ func setupTailwind(baseDir string) error {
 		it.LogErrorWithStack(err)
 		return err
 	}
-	if err := exec.Command("deno", "i", "-D", "tailwindcss", "postcss", "autoprefixer").Run(); err != nil {
+	if err := exec.Command("npm", "install", "-D", "tailwindcss", "postcss", "autoprefixer").Run(); err != nil {
 		it.LogErrorWithStack(err)
 		return err
 	}
-	if err := exec.Command("deno", "tailwindcss", "init", "-p").Run(); err != nil {
+	if err := exec.Command("npx", "tailwindcss", "init").Run(); err != nil {
 		it.LogErrorWithStack(err)
 		return err
 	}
@@ -287,7 +287,7 @@ func setupShadcnUI(baseDir string) error {
 	}
 
 	// Install shadcn/ui components (hypothetical example)
-	cmd := exec.Command("deno", "i", "@shadcn/ui")
+	cmd := exec.Command("npm", "i", "@shadcn/ui")
 	cmd.Dir = baseDir
 	if err := cmd.Run(); err != nil {
 		it.LogErrorWithStack(err)
